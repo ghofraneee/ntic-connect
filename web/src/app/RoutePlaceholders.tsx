@@ -10,11 +10,12 @@ export function WorkspacePlaceholder() {
       <p className="app-eyebrow">{ROLE_LABELS[user.role]} · Espace privé</p>
       <h1>Votre espace est prêt.</h1>
       <p className="app-page__intro">
-        Les outils de votre espace seront ajoutés au fil des prochaines étapes.
+        Les outils propres à cet espace seront ajoutés au fil des prochaines
+        étapes.
       </p>
       <p className="app-page__note">
-        Cette session de démonstration est enregistrée sur cet appareil. Les
-        données partagées entre les rôles seront ajoutées à l’étape 3.
+        Les données de démonstration sont partagées entre les rôles et
+        enregistrées sur cet appareil.
       </p>
     </section>
   )

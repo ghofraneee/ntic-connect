@@ -5,6 +5,7 @@ import type {
   Announcement,
   AnnouncementTarget,
   AppDatabase,
+  ClubJoinRequest,
   ClubEvent,
   Lesson,
   Notification,
@@ -64,6 +65,10 @@ export type DataContextValue = AppDatabase & {
   ) => void
   deleteEvent: (id: string, actor: AuthUser) => void
   registerForEvent: (eventId: string, user: AuthUser) => Registration
+  requestClubMembership: (
+    clubId: string,
+    user: AuthUser,
+  ) => ClubJoinRequest
 }
 
 export const DataContext = createContext<DataContextValue | null>(null)

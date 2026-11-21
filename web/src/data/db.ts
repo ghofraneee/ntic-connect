@@ -61,6 +61,7 @@ export type RequestHistoryEntry = {
   actorName: string
   actorRole: UserRole
   note?: string
+  internalNote?: string
   reason?: string
   createdAt: string
 }
@@ -121,6 +122,16 @@ export type Registration = {
   registeredAt: string
 }
 
+export type ClubJoinRequest = {
+  id: string
+  clubId: string
+  userId: string
+  userName: string
+  filiere?: string
+  status: 'pending' | 'accepted' | 'refused'
+  requestedAt: string
+}
+
 export type AppDatabase = {
   announcements: Announcement[]
   lessons: Lesson[]
@@ -129,6 +140,7 @@ export type AppDatabase = {
   clubs: Club[]
   events: ClubEvent[]
   registrations: Registration[]
+  clubJoinRequests: ClubJoinRequest[]
 }
 
 const STORAGE_KEY = 'ntic-connect:data:v1'
@@ -140,15 +152,24 @@ const COLLECTION_KEYS: (keyof AppDatabase)[] = [
   'clubs',
   'events',
   'registrations',
+  'clubJoinRequests',
 ]
+const LEGACY_COLLECTION_KEYS: (keyof Omit<AppDatabase, 'clubJoinRequests'>)[] =
+  COLLECTION_KEYS.filter(
+    (key): key is keyof Omit<AppDatabase, 'clubJoinRequests'> =>
+      key !== 'clubJoinRequests',
+  )
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
 }
 
-function hasCollectionIds(value: unknown): value is AppDatabase {
+function hasCollectionIds<T extends object>(
+  value: unknown,
+  keys: readonly string[],
+): value is T {
   if (!isRecord(value)) return false
-  return COLLECTION_KEYS.every((key) => {
+  return keys.every((key) => {
     const collection = value[key]
     return (
       Array.isArray(collection) &&
@@ -171,10 +192,20 @@ export function loadDatabase(): AppDatabase {
     const parsed: unknown = JSON.parse(stored)
     if (
       isRecord(parsed) &&
-      parsed.version === 1 &&
-      hasCollectionIds(parsed.data)
+      parsed.version === 2 &&
+      hasCollectionIds<AppDatabase>(parsed.data, COLLECTION_KEYS)
     ) {
       return parsed.data
+    }
+    if (
+      isRecord(parsed) &&
+      parsed.version === 1 &&
+      hasCollectionIds<Omit<AppDatabase, 'clubJoinRequests'>>(
+        parsed.data,
+        LEGACY_COLLECTION_KEYS,
+      )
+    ) {
+      return { ...parsed.data, clubJoinRequests: [] }
     }
   } catch (error) {
     console.error('Les données de démonstration enregistrées sont illisibles.', error)
@@ -188,7 +219,7 @@ export function loadDatabase(): AppDatabase {
 export function saveDatabase(database: AppDatabase): void {
   window.localStorage.setItem(
     STORAGE_KEY,
-    JSON.stringify({ version: 1, data: database }),
+    JSON.stringify({ version: 2, data: database }),
   )
 }
 

@@ -478,12 +478,17 @@
   .app-sidebar {
     z-index: 50;
     width: min(300px, calc(100vw - 48px));
+    visibility: hidden;
     transform: translateX(-105%);
-    transition: transform 200ms ease;
+    transition:
+      transform 200ms ease,
+      visibility 0s linear 200ms;
   }
 
   .app-sidebar--open {
+    visibility: visible;
     transform: translateX(0);
+    transition-delay: 0s;
   }
 
   .app-sidebar__close {

@@ -6,6 +6,7 @@ import {
   REQUEST_STATUS_LABELS,
   type AdministrativeRequest,
   type Announcement,
+  type ClubJoinRequest,
   type ClubEvent,
   type Lesson,
   type Notification,
@@ -322,7 +323,7 @@ export default function DataProvider({ children }: { children: ReactNode }) {
       status: update.status,
       actorName: actor.name,
       actorRole: actor.role,
-      note: update.internalNote?.trim() || undefined,
+      internalNote: update.internalNote?.trim() || undefined,
       reason:
         update.status === 'refusee'
           ? update.refusalReason?.trim()
@@ -498,6 +499,49 @@ export default function DataProvider({ children }: { children: ReactNode }) {
     return registration
   }
 
+  const requestClubMembership = (
+    clubId: string,
+    user: AuthUser,
+  ): ClubJoinRequest => {
+    if (user.role !== 'stagiaire') {
+      throw new Error('Seul un stagiaire peut demander à rejoindre un club.')
+    }
+
+    const club = database.clubs.find((item) => item.id === clubId)
+    if (!club) throw new Error('Ce club n’existe plus.')
+
+    const existingRequest = database.clubJoinRequests.find(
+      (request) =>
+        request.clubId === clubId &&
+        request.userId === user.id &&
+        request.status !== 'refused',
+    )
+    if (existingRequest) return existingRequest
+
+    const request: ClubJoinRequest = {
+      id: createId('club-request'),
+      clubId,
+      userId: user.id,
+      userName: user.name,
+      filiere: user.filiere,
+      status: 'pending',
+      requestedAt: new Date().toISOString(),
+    }
+    const notification = makeNotification(
+      { role: 'club', userId: club.managerId },
+      'Demande pour rejoindre un club',
+      `${user.name} souhaite rejoindre le ${club.name}.`,
+      '/app/club/membres',
+    )
+
+    setDatabase((current) => ({
+      ...current,
+      clubJoinRequests: [request, ...current.clubJoinRequests],
+      notifications: [notification, ...current.notifications],
+    }))
+    return request
+  }
+
   const value: DataContextValue = {
     ...database,
     resetData,
@@ -517,6 +561,7 @@ export default function DataProvider({ children }: { children: ReactNode }) {
     updateEvent,
     deleteEvent,
     registerForEvent,
+    requestClubMembership,
   }
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>

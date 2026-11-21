@@ -2,6 +2,7 @@ import type {
   AdministrativeRequest,
   Announcement,
   AppDatabase,
+  ClubJoinRequest,
   Club,
   ClubEvent,
   Lesson,
@@ -589,6 +590,27 @@ const registrations: Registration[] = [
   },
 ]
 
+const clubJoinRequests: ClubJoinRequest[] = [
+  {
+    id: 'club-request-001',
+    clubId: 'club-cs',
+    userId: 'demo-stagiaire-02',
+    userName: 'Younes Démo',
+    filiere: 'Développement Digital',
+    status: 'pending',
+    requestedAt: '2026-11-20T10:00:00.000Z',
+  },
+  {
+    id: 'club-request-002',
+    clubId: 'club-entre',
+    userId: 'demo-stagiaire-03',
+    userName: 'Salma Démo',
+    filiere: 'Gestion des entreprises',
+    status: 'pending',
+    requestedAt: '2026-11-19T13:15:00.000Z',
+  },
+]
+
 export const seedData: AppDatabase = {
   announcements,
   lessons,
@@ -597,4 +619,5 @@ export const seedData: AppDatabase = {
   clubs,
   events,
   registrations,
+  clubJoinRequests,
 }
