@@ -44,7 +44,7 @@
   width: 48px;
   height: 48px;
   flex: none;
-  background-color: var(--color-paper);
+  background-color: transparent;
   object-fit: contain;
 }
 
@@ -74,6 +74,7 @@
   justify-self: end;
   padding: 12px 19px;
   border: 1px solid var(--color-green);
+  border-radius: 999px;
   background: var(--color-green);
   color: var(--color-paper);
   font-size: 0.9rem;
@@ -81,13 +82,19 @@
   text-decoration: none;
   transition:
     background-color 160ms ease,
-    color 160ms ease;
+    color 160ms ease,
+    transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .site-header__login:hover,
 .mobile-menu__login:hover {
   background: transparent;
   color: var(--color-paper);
+}
+
+.site-header__login:active,
+.mobile-menu__login:active {
+  transform: scale(0.94);
 }
 
 .site-header :focus-visible,
