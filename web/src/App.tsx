@@ -1,5 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import './App.css'
+import Footer from './components/layout/Footer'
+import Header from './components/layout/Header'
 import SceneErrorBoundary from './three/SceneErrorBoundary'
 import SceneFallback from './three/SceneFallback'
 import usePointerPosition from './three/usePointerPosition'
@@ -60,7 +62,7 @@ export default function App() {
     if (!('IntersectionObserver' in window)) return
 
     const revealSections = document.querySelectorAll(
-      '.hero-section, .spaces-section, .cta-section',
+      '.hero-section, .spaces-section, .cta-section, .site-footer',
     )
     const visibleSections = new Set<Element>()
     const observer = new IntersectionObserver(
@@ -95,6 +97,7 @@ export default function App() {
           </Suspense>
         </SceneErrorBoundary>
       )}
+      <Header />
       <main className="ntic-page">
         <section
           id="hero"
@@ -105,7 +108,7 @@ export default function App() {
             <p className="section-eyebrow">OFPPT · Une communauté connectée</p>
             <h1 id="hero-title">NTIC Connect</h1>
             <p className="hero-description">
-              Un espace commun pour rapprocher les étudiants, les formateurs,
+              Un espace commun pour rapprocher les stagiaires, les formateurs,
               l’administration et les clubs.
             </p>
             <a className="text-link" href="#constat">
@@ -170,6 +173,7 @@ export default function App() {
           </div>
         </section>
       </main>
+      <Footer />
     </>
   )
 }

@@ -1,5 +1,18 @@
 @import "tailwindcss";
 
+:root {
+  color-scheme: dark;
+  --color-green: #2e9b4f;
+  --color-blue: #1f4e9c;
+  --color-gray: #8a8d91;
+  --color-ink: #0b1b3a;
+  --color-paper: #f6f4ef;
+  --color-text-on-light: #17233f;
+  --font-display: 'Bricolage Grotesque', 'Arial', sans-serif;
+  --font-body: 'DM Sans', 'Arial', sans-serif;
+  --focus-ring: #b6d9bf;
+}
+
 html,
 body,
 #root {
@@ -8,6 +21,8 @@ body,
 
 body {
   background: linear-gradient(180deg, #0b1b3a 0%, #060f24 100%);
+  color: var(--color-paper);
+  font-family: var(--font-body);
 }
 
 #root {
@@ -21,4 +36,22 @@ body {
 
 body {
   margin: 0;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 4px;
 }

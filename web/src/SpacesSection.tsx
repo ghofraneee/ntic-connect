@@ -2,8 +2,8 @@ import { useEffect, useRef } from 'react'
 
 const spaces = [
   {
-    name: 'Étudiants',
-    description: 'Les informations utiles au parcours et à la vie étudiante.',
+    name: 'Stagiaires',
+    description: 'Les informations utiles au parcours et à la vie des stagiaires.',
   },
   {
     name: 'Formateurs',
@@ -37,12 +37,14 @@ type SpacesSectionProps = {
 
 export default function SpacesSection({ reducedMotion }: SpacesSectionProps) {
   const sectionRef = useRef<HTMLElement>(null)
+  const windowRef = useRef<HTMLDivElement>(null)
   const trackRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const section = sectionRef.current
+    const windowElement = windowRef.current
     const track = trackRef.current
-    if (!section || !track) return
+    if (!section || !windowElement || !track) return
     if (reducedMotion) {
       track.style.removeProperty('transform')
       return
@@ -58,7 +60,10 @@ export default function SpacesSection({ reducedMotion }: SpacesSectionProps) {
               Math.max(0, -section.getBoundingClientRect().top / scrollDistance),
             )
           : 0
-      const travelDistance = Math.max(track.scrollWidth - section.clientWidth, 0)
+      const travelDistance = Math.max(
+        track.scrollWidth - windowElement.clientWidth,
+        0,
+      )
 
       track.style.transform = `translate3d(${-travelDistance * progress}px, 0, 0)`
     }
@@ -95,6 +100,7 @@ export default function SpacesSection({ reducedMotion }: SpacesSectionProps) {
           <p>Faites défiler pour découvrir les espaces de la communauté.</p>
         </header>
         <div
+          ref={windowRef}
           className="spaces-window"
           role="region"
           aria-label="Les sept espaces, défilement horizontal"
