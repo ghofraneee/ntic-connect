@@ -18,11 +18,28 @@ import {
   SchedulePage,
 } from './stagiaire/StagiairePages'
 import {
+  ActivitiesPage as DirectionActivitiesPage,
   AnnouncementsPage as DirectionAnnouncementsPage,
   DashboardPage as DirectionDashboardPage,
+  FilieresSectionsPage,
+  ReportsPage as DirectionReportsPage,
   RequestDetailPage as DirectionRequestDetailPage,
   RequestsPage as DirectionRequestsPage,
+  UsersPage as DirectionUsersPage,
 } from './direction/DirectionPages'
+import {
+  AnnouncementsPage as FormateurAnnouncementsPage,
+  CoursesPage,
+  DashboardPage as FormateurDashboardPage,
+  ProfilePage as FormateurProfilePage,
+  UploadPage,
+} from './formateur/FormateurPages'
+import {
+  DashboardPage as ClubDashboardPage,
+  EventsPage,
+  MembersPage,
+  ParticipantsPage,
+} from './club/ClubPages'
 
 export default function AppRoutes() {
   return (
@@ -60,10 +77,47 @@ export default function AppRoutes() {
         <Route path="demandes" element={<DirectionRequestsPage />} />
         <Route path="demandes/:requestId" element={<DirectionRequestDetailPage />} />
         <Route path="annonces" element={<DirectionAnnouncementsPage />} />
+        <Route path="utilisateurs" element={<DirectionUsersPage />} />
+        <Route path="filieres" element={<FilieresSectionsPage />} />
+        <Route path="activites" element={<DirectionActivitiesPage />} />
+        <Route path="rapports" element={<DirectionReportsPage />} />
         <Route path="*" element={<WorkspacePlaceholder />} />
       </Route>
+      <Route
+        path="/app/formateur"
+        element={
+          <ProtectedRoute role="formateur">
+            <AppLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<FormateurDashboardPage />} />
+        <Route path="cours" element={<CoursesPage />} />
+        <Route path="deposer-un-cours" element={<UploadPage />} />
+        <Route path="annonces" element={<FormateurAnnouncementsPage />} />
+        <Route path="profil" element={<FormateurProfilePage />} />
+        <Route path="*" element={<Navigate to="/app/formateur" replace />} />
+      </Route>
+      <Route
+        path="/app/club"
+        element={
+          <ProtectedRoute role="club">
+            <AppLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<ClubDashboardPage />} />
+        <Route path="evenements" element={<EventsPage />} />
+        <Route path="participants" element={<ParticipantsPage />} />
+        <Route path="membres" element={<MembersPage />} />
+        <Route path="*" element={<Navigate to="/app/club" replace />} />
+      </Route>
       {USER_ROLES.filter(
-        (role) => role !== 'stagiaire' && role !== 'direction',
+        (role) =>
+          role !== 'stagiaire' &&
+          role !== 'direction' &&
+          role !== 'formateur' &&
+          role !== 'club',
       ).map((role) => (
         <Route
           key={role}

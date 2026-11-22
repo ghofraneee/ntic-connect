@@ -1,32 +1,69 @@
-# React + TypeScript + Vite
+# NTIC Connect
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Prototype public et privé de l’établissement OFPPT NTIC Safi.
 
-Currently, two official plugins are available:
+## Technologie
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- React 19, TypeScript et Vite
+- React Router
+- Tailwind CSS 4
+- Framer Motion
+- Three.js, React Three Fiber et Drei
+- Lenis pour le défilement du site public
+- Stockage local simulé avec `localStorage`
 
-## React Compiler
+Le site public conserve sa scène 3D. Elle n’est pas montée sur les routes `/app/*`.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Comptes de démonstration
 
-## Expanding the Oxlint configuration
+Mot de passe commun : `demo1234`
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+| Rôle | Adresse |
+| --- | --- |
+| Stagiaire | `stagiaire@demo.ma` |
+| Formateur | `formateur@demo.ma` |
+| Direction | `direction@demo.ma` |
+| Responsable de club | `club@demo.ma` |
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+Tous les comptes sont fictifs. Les données sont enregistrées dans le navigateur sous `ntic-connect:data:v1` et la session sous `ntic-connect:session`.
+
+## Espaces privés
+
+- `/app/stagiaire` : tableau de bord, annonces, bibliothèque, demandes, emploi du temps, clubs, opportunités et profil.
+- `/app/formateur` : tableau de bord, cours, dépôt de cours, annonces sectionnelles et profil.
+- `/app/direction` : tableau de bord, demandes, détail et changement de statut, annonces ciblées.
+- `/app/club` : tableau de bord, événements, participants et adhésions.
+
+Le menu « Mode démo » permet de changer rapidement de rôle sans ressaisir les identifiants. « Réinitialiser la démo » restaure les données initiales sans supprimer la session courante.
+
+## Scénario de démonstration complet
+
+1. Connectez-vous comme Stagiaire.
+2. Ouvrez **Demandes administratives**, puis **Nouvelle demande**.
+3. Envoyez une demande « Attestation de scolarité ».
+4. Passez en session Direction avec « Mode démo ».
+5. Ouvrez la demande envoyée et changez son statut en « En traitement ».
+6. Revenez en session Stagiaire : le statut et la notification sont visibles.
+7. Passez en Direction et publiez une annonce pour « tous ».
+8. Revenez en Stagiaire pour consulter l’annonce.
+9. Passez en Formateur et déposez un cours.
+10. Revenez en Stagiaire : le cours apparaît dans la bibliothèque de sa filière.
+
+## Lancement
+
+Depuis le dossier `web` :
+
+```powershell
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Puis ouvrez `http://127.0.0.1:5173`.
+
+## Vérification
+
+```powershell
+npm run build
+npm run lint
+npm run dev
+```

@@ -8,6 +8,10 @@ import {
   type Announcement,
   type ClubJoinRequest,
   type ClubEvent,
+  type DirectionActivity,
+  type DirectionSection,
+  type DirectionUser,
+  type Filiere,
   type Lesson,
   type Notification,
   type Registration,
@@ -60,6 +64,14 @@ function announcementRecipients(announcement: NewAnnouncement): Recipient[] {
   }
   if (announcement.target === 'formateurs') return [{ role: 'formateur' }]
   if (announcement.target === 'stagiaires') return [{ role: 'stagiaire' }]
+  if (announcement.targetSection) {
+    return [
+      {
+        role: 'stagiaire',
+        filiere: announcement.targetFiliere,
+      },
+    ]
+  }
   if (!announcement.targetFiliere?.trim()) {
     throw new Error('Choisissez une filière pour cette annonce.')
   }
@@ -113,7 +125,9 @@ export default function DataProvider({ children }: { children: ReactNode }) {
       }
       return (
         user.role === 'stagiaire' &&
-        user.filiere === announcement.targetFiliere
+        (announcement.targetSection
+          ? user.filiere === announcement.targetFiliere
+          : user.filiere === announcement.targetFiliere)
       )
     })
 
@@ -150,6 +164,7 @@ export default function DataProvider({ children }: { children: ReactNode }) {
       target: input.target,
       targetFiliere:
         input.target === 'filiere' ? input.targetFiliere?.trim() : undefined,
+      targetSection: input.targetSection?.trim() || undefined,
       publishedBy: actor.name,
       createdAt: new Date().toISOString(),
       readBy: [],
@@ -542,6 +557,183 @@ export default function DataProvider({ children }: { children: ReactNode }) {
     return request
   }
 
+  const resolveClubJoinRequest = (
+    requestId: string,
+    decision: 'accepted' | 'refused',
+  ) => {
+    const request = database.clubJoinRequests.find(
+      (item) => item.id === requestId,
+    )
+    if (!request) throw new Error('Cette demande n’existe plus.')
+
+    const club = database.clubs.find((item) => item.id === request.clubId)
+    setDatabase((current) => ({
+      ...current,
+      clubJoinRequests: current.clubJoinRequests.map((item) =>
+        item.id === requestId ? { ...item, status: decision } : item,
+      ),
+      clubs: current.clubs.map((item) =>
+        item.id === request.clubId
+          ? {
+              ...item,
+              memberCount:
+                decision === 'accepted'
+                  ? item.memberCount + 1
+                  : item.memberCount,
+            }
+          : item,
+      ),
+      notifications: [
+        makeNotification(
+          { role: 'stagiaire', userId: request.userId },
+          decision === 'accepted'
+            ? 'Demande acceptée'
+            : 'Demande refusée',
+          decision === 'accepted'
+            ? `Vous avez rejoint le ${club?.name ?? 'club'}.`
+            : `Votre demande pour rejoindre le ${club?.name ?? 'club'} a été refusée.`,
+          '/app/stagiaire/clubs',
+        ),
+        ...current.notifications,
+      ],
+    }))
+  }
+
+  const removeClubMember = (requestId: string) => {
+    const request = database.clubJoinRequests.find(
+      (item) => item.id === requestId && item.status === 'accepted',
+    )
+    if (!request) throw new Error('Ce membre n’existe plus.')
+
+    setDatabase((current) => ({
+      ...current,
+      clubJoinRequests: current.clubJoinRequests.map((item) =>
+        item.id === requestId ? { ...item, status: 'refused' } : item,
+      ),
+      clubs: current.clubs.map((club) =>
+        club.id === request.clubId
+          ? { ...club, memberCount: Math.max(0, club.memberCount - 1) }
+          : club,
+      ),
+      notifications: [
+        makeNotification(
+          { role: 'stagiaire', userId: request.userId },
+          'Vous avez quitté un club',
+          'Votre adhésion a été retirée par le responsable du club.',
+          '/app/stagiaire/clubs',
+        ),
+        ...current.notifications,
+      ],
+    }))
+  }
+
+  const addDirectionUser = (
+    input: Omit<DirectionUser, 'id'>,
+  ): DirectionUser => {
+    if (!input.name.trim() || !input.email.trim()) {
+      throw new Error('Le nom et l’adresse e-mail sont obligatoires.')
+    }
+    const user: DirectionUser = {
+      ...input,
+      id: createId('user'),
+      name: input.name.trim(),
+      email: input.email.trim(),
+    }
+    setDatabase((current) => ({
+      ...current,
+      directionUsers: [user, ...current.directionUsers],
+    }))
+    return user
+  }
+
+  const toggleDirectionUser = (id: string) => {
+    setDatabase((current) => ({
+      ...current,
+      directionUsers: current.directionUsers.map((user) =>
+        user.id === id ? { ...user, active: !user.active } : user,
+      ),
+    }))
+  }
+
+  const addFiliere = (name: string, color = '#1F4E9C'): Filiere => {
+    if (!name.trim()) throw new Error('Le nom de la filière est obligatoire.')
+    const filiere: Filiere = {
+      id: createId('filiere'),
+      name: name.trim(),
+      color,
+    }
+    setDatabase((current) => ({
+      ...current,
+      filieres: [filiere, ...current.filieres],
+    }))
+    return filiere
+  }
+
+  const deleteFiliere = (id: string) => {
+    setDatabase((current) => ({
+      ...current,
+      filieres: current.filieres.filter((filiere) => filiere.id !== id),
+      directionSections: current.directionSections.filter(
+        (section) => section.filiereId !== id,
+      ),
+    }))
+  }
+
+  const addDirectionSection = (
+    filiereId: string,
+    name: string,
+  ): DirectionSection => {
+    if (!name.trim()) throw new Error('Le nom de la section est obligatoire.')
+    const section: DirectionSection = {
+      id: createId('section'),
+      filiereId,
+      name: name.trim(),
+    }
+    setDatabase((current) => ({
+      ...current,
+      directionSections: [section, ...current.directionSections],
+    }))
+    return section
+  }
+
+  const deleteDirectionSection = (id: string) => {
+    setDatabase((current) => ({
+      ...current,
+      directionSections: current.directionSections.filter(
+        (section) => section.id !== id,
+      ),
+    }))
+  }
+
+  const addDirectionActivity = (
+    input: Omit<DirectionActivity, 'id' | 'createdAt'>,
+  ): DirectionActivity => {
+    if (!input.title.trim() || !input.location.trim()) {
+      throw new Error('Le titre et le lieu sont obligatoires.')
+    }
+    const activity: DirectionActivity = {
+      ...input,
+      id: createId('activity'),
+      title: input.title.trim(),
+      location: input.location.trim(),
+      createdAt: new Date().toISOString(),
+    }
+    setDatabase((current) => ({
+      ...current,
+      directionActivities: [activity, ...current.directionActivities],
+    }))
+    return activity
+  }
+
+  const deleteDirectionActivity = (id: string) => {
+    setDatabase((current) => ({
+      ...current,
+      directionActivities: current.directionActivities.filter(
+        (activity) => activity.id !== id,
+      ),
+    }))
+  }
+
   const value: DataContextValue = {
     ...database,
     resetData,
@@ -562,6 +754,16 @@ export default function DataProvider({ children }: { children: ReactNode }) {
     deleteEvent,
     registerForEvent,
     requestClubMembership,
+    resolveClubJoinRequest,
+    removeClubMember,
+    addDirectionUser,
+    toggleDirectionUser,
+    addFiliere,
+    deleteFiliere,
+    addDirectionSection,
+    deleteDirectionSection,
+    addDirectionActivity,
+    deleteDirectionActivity,
   }
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>

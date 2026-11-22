@@ -7,6 +7,10 @@ import type {
   AppDatabase,
   ClubJoinRequest,
   ClubEvent,
+  DirectionActivity,
+  DirectionSection,
+  DirectionUser,
+  Filiere,
   Lesson,
   Notification,
   Registration,
@@ -19,6 +23,7 @@ export type NewAnnouncement = {
   body: string
   target: AnnouncementTarget
   targetFiliere?: string
+  targetSection?: string
 }
 
 export type NewLesson = Omit<Lesson, 'id' | 'createdAt' | 'trainer'>
@@ -69,6 +74,21 @@ export type DataContextValue = AppDatabase & {
     clubId: string,
     user: AuthUser,
   ) => ClubJoinRequest
+  resolveClubJoinRequest: (
+    requestId: string,
+    decision: 'accepted' | 'refused',
+  ) => void
+  removeClubMember: (requestId: string) => void
+  addDirectionUser: (input: Omit<DirectionUser, 'id'>) => DirectionUser
+  toggleDirectionUser: (id: string) => void
+  addFiliere: (name: string, color?: string) => Filiere
+  deleteFiliere: (id: string) => void
+  addDirectionSection: (filiereId: string, name: string) => DirectionSection
+  deleteDirectionSection: (id: string) => void
+  addDirectionActivity: (
+    input: Omit<DirectionActivity, 'id' | 'createdAt'>,
+  ) => DirectionActivity
+  deleteDirectionActivity: (id: string) => void
 }
 
 export const DataContext = createContext<DataContextValue | null>(null)

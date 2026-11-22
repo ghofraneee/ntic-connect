@@ -13,6 +13,7 @@ export type Announcement = {
   body: string
   target: AnnouncementTarget
   targetFiliere?: string
+  targetSection?: string
   publishedBy: string
   createdAt: string
   readBy: string[]
@@ -132,6 +133,37 @@ export type ClubJoinRequest = {
   requestedAt: string
 }
 
+export type DirectionUser = {
+  id: string
+  name: string
+  email: string
+  role: UserRole
+  filiere?: string
+  active: boolean
+}
+
+export type Filiere = {
+  id: string
+  name: string
+  color: string
+}
+
+export type DirectionSection = {
+  id: string
+  filiereId: string
+  name: string
+}
+
+export type DirectionActivity = {
+  id: string
+  title: string
+  kind: 'Club' | 'Établissement'
+  startsAt: string
+  location: string
+  participants: number
+  createdAt: string
+}
+
 export type AppDatabase = {
   announcements: Announcement[]
   lessons: Lesson[]
@@ -141,6 +173,10 @@ export type AppDatabase = {
   events: ClubEvent[]
   registrations: Registration[]
   clubJoinRequests: ClubJoinRequest[]
+  directionUsers: DirectionUser[]
+  filieres: Filiere[]
+  directionSections: DirectionSection[]
+  directionActivities: DirectionActivity[]
 }
 
 const STORAGE_KEY = 'ntic-connect:data:v1'
@@ -153,12 +189,11 @@ const COLLECTION_KEYS: (keyof AppDatabase)[] = [
   'events',
   'registrations',
   'clubJoinRequests',
+  'directionUsers',
+  'filieres',
+  'directionSections',
+  'directionActivities',
 ]
-const LEGACY_COLLECTION_KEYS: (keyof Omit<AppDatabase, 'clubJoinRequests'>)[] =
-  COLLECTION_KEYS.filter(
-    (key): key is keyof Omit<AppDatabase, 'clubJoinRequests'> =>
-      key !== 'clubJoinRequests',
-  )
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
@@ -192,20 +227,21 @@ export function loadDatabase(): AppDatabase {
     const parsed: unknown = JSON.parse(stored)
     if (
       isRecord(parsed) &&
-      parsed.version === 2 &&
+      parsed.version === 3 &&
       hasCollectionIds<AppDatabase>(parsed.data, COLLECTION_KEYS)
     ) {
       return parsed.data
     }
     if (
       isRecord(parsed) &&
-      parsed.version === 1 &&
-      hasCollectionIds<Omit<AppDatabase, 'clubJoinRequests'>>(
-        parsed.data,
-        LEGACY_COLLECTION_KEYS,
-      )
+      (parsed.version === 1 || parsed.version === 2) &&
+      isRecord(parsed.data)
     ) {
-      return { ...parsed.data, clubJoinRequests: [] }
+      const seed = cloneSeedData()
+      return {
+        ...seed,
+        ...(parsed.data as unknown as Partial<AppDatabase>),
+      }
     }
   } catch (error) {
     console.error('Les données de démonstration enregistrées sont illisibles.', error)
@@ -219,7 +255,7 @@ export function loadDatabase(): AppDatabase {
 export function saveDatabase(database: AppDatabase): void {
   window.localStorage.setItem(
     STORAGE_KEY,
-    JSON.stringify({ version: 2, data: database }),
+    JSON.stringify({ version: 3, data: database }),
   )
 }
 

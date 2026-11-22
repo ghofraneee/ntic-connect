@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'rea
 import { ArrowLeft, ArrowUpRight, CalendarDays, Search, Trash2 } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
-import type { AuthUser } from '../../auth/roles'
+import { ROLE_LABELS, type AuthUser, type UserRole } from '../../auth/roles'
 import type {
   AdministrativeRequest,
   Announcement,
@@ -142,7 +142,7 @@ function SimpleBarChart({
   const maximum = Math.max(1, ...rows.map((row) => row.count))
   const total = rows.reduce((sum, row) => sum + row.count, 0)
   return (
-    <section className="dir-panel dir-chart" aria-label={`${title}, ${total} demandes au total`}>
+    <section className="dir-panel dir-chart" aria-label={`${title}, total ${total}`}>
       <p className="dir-kicker">Répartition</p>
       <h2>{title}</h2>
       {rows.map((row) => (
@@ -701,9 +701,448 @@ function AnnouncementsPage() {
   )
 }
 
+function UsersPage() {
+  const ready = usePageReady()
+  const {
+    directionUsers,
+    filieres,
+    addDirectionUser,
+    toggleDirectionUser,
+  } = useData()
+  const { showToast } = useToast()
+  const [query, setQuery] = useState('')
+  const [role, setRole] = useState<'all' | UserRole>('all')
+  const [status, setStatus] = useState<'all' | 'active' | 'disabled'>('all')
+  const [formOpen, setFormOpen] = useState(false)
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [newRole, setNewRole] = useState<UserRole>('stagiaire')
+  const [filiere, setFiliere] = useState('')
+  const [error, setError] = useState('')
+
+  if (!ready) return <LoadingState />
+
+  const visible = directionUsers
+    .filter((user) => {
+      const matchesQuery = `${user.name} ${user.email}`
+        .toLocaleLowerCase('fr')
+        .includes(query.toLocaleLowerCase('fr'))
+      const matchesRole = role === 'all' || user.role === role
+      const matchesStatus =
+        status === 'all' ||
+        (status === 'active' && user.active) ||
+        (status === 'disabled' && !user.active)
+      return matchesQuery && matchesRole && matchesStatus
+    })
+    .slice()
+    .sort((left, right) => left.name.localeCompare(right.name, 'fr'))
+
+  const submit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!name.trim() || !email.trim()) {
+      setError('Le nom et l’adresse e-mail sont obligatoires.')
+      return
+    }
+    if (!email.includes('@')) {
+      setError('Saisissez une adresse e-mail valide.')
+      return
+    }
+    try {
+      addDirectionUser({
+        name,
+        email,
+        role: newRole,
+        filiere: newRole === 'stagiaire' ? filiere || undefined : undefined,
+        active: true,
+      })
+      setName('')
+      setEmail('')
+      setNewRole('stagiaire')
+      setFiliere('')
+      setError('')
+      setFormOpen(false)
+      showToast('Utilisateur ajouté à la démonstration.', 'success')
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Impossible d’ajouter cet utilisateur.')
+    }
+  }
+
+  return (
+    <PageFrame
+      eyebrow="Espace Direction · Administration"
+      title="Utilisateurs"
+      intro="Consultez les comptes fictifs et gérez leur disponibilité."
+    >
+      <div className="dir-user-tools">
+        <label className="dir-search">
+          <Search size={17} aria-hidden="true" />
+          <span className="dir-visually-hidden">Rechercher un utilisateur</span>
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Nom ou adresse e-mail…" />
+        </label>
+        <label>Rôle
+          <select value={role} onChange={(event) => setRole(event.target.value as 'all' | UserRole)}>
+            <option value="all">Tous les rôles</option>
+            {(['stagiaire', 'formateur', 'direction', 'club'] as UserRole[]).map((item) =>
+              <option value={item} key={item}>{ROLE_LABELS[item]}</option>,
+            )}
+          </select>
+        </label>
+        <label>Statut
+          <select value={status} onChange={(event) => setStatus(event.target.value as 'all' | 'active' | 'disabled')}>
+            <option value="all">Tous les statuts</option>
+            <option value="active">Actifs</option>
+            <option value="disabled">Désactivés</option>
+          </select>
+        </label>
+        <button className="dir-primary-button" type="button" onClick={() => setFormOpen((value) => !value)}>
+          {formOpen ? 'Fermer le formulaire' : 'Ajouter un utilisateur'}
+        </button>
+      </div>
+
+      {formOpen && (
+        <form className="dir-panel dir-user-form" onSubmit={submit}>
+          <p className="dir-kicker">Nouvel utilisateur</p>
+          <h2>Informations du compte</h2>
+          <label>Nom complet
+            <input value={name} onChange={(event) => { setName(event.target.value); setError('') }} />
+          </label>
+          <label>Adresse e-mail
+            <input type="email" value={email} onChange={(event) => { setEmail(event.target.value); setError('') }} />
+          </label>
+          <label>Rôle
+            <select value={newRole} onChange={(event) => setNewRole(event.target.value as UserRole)}>
+              {(['stagiaire', 'formateur', 'direction', 'club'] as UserRole[]).map((item) =>
+                <option value={item} key={item}>{ROLE_LABELS[item]}</option>,
+              )}
+            </select>
+          </label>
+          {newRole === 'stagiaire' && (
+            <label>Filière
+              <select value={filiere} onChange={(event) => setFiliere(event.target.value)}>
+                <option value="">Non renseignée</option>
+                {filieres.map((item) => <option value={item.name} key={item.id}>{item.name}</option>)}
+              </select>
+            </label>
+          )}
+          {error && <p className="dir-error" role="alert">{error}</p>}
+          <button className="dir-primary-button" type="submit">Créer le compte fictif</button>
+        </form>
+      )}
+
+      {visible.length === 0 ? (
+        <EmptyState title="Aucun utilisateur trouvé" detail="Modifiez les filtres ou ajoutez un compte." />
+      ) : (
+        <div className="dir-table-wrap dir-user-table">
+          <table className="dir-table">
+            <thead><tr><th>Utilisateur</th><th>Rôle</th><th>Filière</th><th>Statut</th><th /></tr></thead>
+            <tbody>
+              {visible.map((user) => (
+                <tr key={user.id}>
+                  <td><strong>{user.name}</strong><small>{user.email}</small></td>
+                  <td>{ROLE_LABELS[user.role]}</td>
+                  <td>{user.filiere ?? '—'}</td>
+                  <td><span className={`dir-user-status ${user.active ? 'is-active' : 'is-disabled'}`}>{user.active ? 'Actif' : 'Désactivé'}</span></td>
+                  <td>
+                    <button
+                      className="dir-toggle-button"
+                      type="button"
+                      onClick={() => {
+                        toggleDirectionUser(user.id)
+                        showToast(user.active ? 'Utilisateur désactivé.' : 'Utilisateur activé.', 'success')
+                      }}
+                    >
+                      {user.active ? 'Désactiver' : 'Activer'}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </PageFrame>
+  )
+}
+
+function FilieresSectionsPage() {
+  const ready = usePageReady()
+  const {
+    filieres,
+    directionSections,
+    addFiliere,
+    deleteFiliere,
+    addDirectionSection,
+    deleteDirectionSection,
+  } = useData()
+  const { showToast } = useToast()
+  const [filiereName, setFiliereName] = useState('')
+  const [selectedFiliere, setSelectedFiliere] = useState('')
+  const [sectionName, setSectionName] = useState('')
+
+  if (!ready) return <LoadingState />
+
+  const addNewFiliere = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    try {
+      const created = addFiliere(filiereName)
+      setFiliereName('')
+      setSelectedFiliere(created.id)
+      showToast('Filière ajoutée.', 'success')
+    } catch (reason) {
+      showToast(reason instanceof Error ? reason.message : 'Impossible d’ajouter la filière.', 'error')
+    }
+  }
+
+  const addNewSection = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!selectedFiliere) {
+      showToast('Choisissez une filière.', 'error')
+      return
+    }
+    try {
+      addDirectionSection(selectedFiliere, sectionName)
+      setSectionName('')
+      showToast('Section ajoutée.', 'success')
+    } catch (reason) {
+      showToast(reason instanceof Error ? reason.message : 'Impossible d’ajouter la section.', 'error')
+    }
+  }
+
+  return (
+    <PageFrame
+      eyebrow="Espace Direction · Organisation"
+      title="Filières et sections"
+      intro="Gérez les filières proposées et les groupes de formation associés."
+    >
+      <div className="dir-management-layout">
+        <section className="dir-panel">
+          <p className="dir-kicker">Filières</p>
+          <h2>Liste des formations</h2>
+          <form className="dir-form dir-inline-form" onSubmit={addNewFiliere}>
+            <label>Nouvelle filière
+              <input value={filiereName} onChange={(event) => setFiliereName(event.target.value)} placeholder="Ex. Métiers du numérique" />
+            </label>
+            <button className="dir-primary-button" type="submit">Ajouter</button>
+          </form>
+          {filieres.length === 0 ? (
+            <EmptyState title="Aucune filière" detail="Ajoutez une première filière." />
+          ) : (
+            <div className="dir-filiere-list">
+              {filieres.map((filiere) => (
+                <article key={filiere.id} className={selectedFiliere === filiere.id ? 'is-selected' : ''}>
+                  <button type="button" onClick={() => setSelectedFiliere(filiere.id)}>
+                    <span style={{ background: filiere.color }} aria-hidden="true" />
+                    <strong>{filiere.name}</strong>
+                  </button>
+                  <button
+                    className="dir-delete-small"
+                    type="button"
+                    aria-label={`Supprimer ${filiere.name}`}
+                    onClick={() => {
+                      deleteFiliere(filiere.id)
+                      if (selectedFiliere === filiere.id) setSelectedFiliere('')
+                      showToast('Filière supprimée.', 'success')
+                    }}
+                  >
+                    ×
+                  </button>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="dir-panel">
+          <p className="dir-kicker">Sections</p>
+          <h2>Groupes de formation</h2>
+          <form className="dir-form dir-inline-form" onSubmit={addNewSection}>
+            <label>Filière
+              <select value={selectedFiliere} onChange={(event) => setSelectedFiliere(event.target.value)}>
+                <option value="">Choisir une filière</option>
+                {filieres.map((filiere) => <option value={filiere.id} key={filiere.id}>{filiere.name}</option>)}
+              </select>
+            </label>
+            <label>Nom de la section
+              <input value={sectionName} onChange={(event) => setSectionName(event.target.value)} placeholder="Ex. 2e année · Groupe C" />
+            </label>
+            <button className="dir-primary-button" type="submit">Ajouter</button>
+          </form>
+          {directionSections.filter((section) => !selectedFiliere || section.filiereId === selectedFiliere).length === 0 ? (
+            <EmptyState title="Aucune section" detail="Ajoutez une section à la filière choisie." />
+          ) : (
+            <div className="dir-section-list">
+              {directionSections
+                .filter((section) => !selectedFiliere || section.filiereId === selectedFiliere)
+                .map((section) => {
+                  const filiere = filieres.find((item) => item.id === section.filiereId)
+                  return (
+                    <article key={section.id}>
+                      <div><strong>{section.name}</strong><small>{filiere?.name ?? 'Filière supprimée'}</small></div>
+                      <button type="button" onClick={() => {
+                        deleteDirectionSection(section.id)
+                        showToast('Section supprimée.', 'success')
+                      }}>Supprimer</button>
+                    </article>
+                  )
+                })}
+            </div>
+          )}
+        </section>
+      </div>
+    </PageFrame>
+  )
+}
+
+function ActivitiesPage() {
+  const ready = usePageReady()
+  const { directionActivities, addDirectionActivity, deleteDirectionActivity } = useData()
+  const { showToast } = useToast()
+  const [title, setTitle] = useState('')
+  const [kind, setKind] = useState<'Club' | 'Établissement'>('Établissement')
+  const [startsAt, setStartsAt] = useState('')
+  const [location, setLocation] = useState('')
+  const [participants, setParticipants] = useState(20)
+
+  if (!ready) return <LoadingState />
+
+  const submit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!title.trim() || !startsAt || !location.trim()) {
+      showToast('Le titre, la date et le lieu sont obligatoires.', 'error')
+      return
+    }
+    try {
+      addDirectionActivity({
+        title,
+        kind,
+        startsAt: new Date(startsAt).toISOString(),
+        location,
+        participants,
+      })
+      setTitle('')
+      setStartsAt('')
+      setLocation('')
+      setParticipants(20)
+      showToast('Activité ajoutée.', 'success')
+    } catch (reason) {
+      showToast(reason instanceof Error ? reason.message : 'Impossible d’ajouter l’activité.', 'error')
+    }
+  }
+
+  return (
+    <PageFrame
+      eyebrow="Espace Direction · Vie du campus"
+      title="Activités"
+      intro="Planifiez les réunions, ateliers et événements institutionnels."
+    >
+      <div className="dir-activities-layout">
+        <section className="dir-panel">
+          <p className="dir-kicker">Nouvelle activité</p>
+          <h2>Ajouter au calendrier</h2>
+          <form className="dir-form" onSubmit={submit}>
+            <label>Titre
+              <input value={title} onChange={(event) => setTitle(event.target.value)} />
+            </label>
+            <label>Type
+              <select value={kind} onChange={(event) => setKind(event.target.value as 'Club' | 'Établissement')}>
+                <option>Établissement</option>
+                <option>Club</option>
+              </select>
+            </label>
+            <label>Date et heure
+              <input type="datetime-local" value={startsAt} onChange={(event) => setStartsAt(event.target.value)} />
+            </label>
+            <label>Lieu
+              <input value={location} onChange={(event) => setLocation(event.target.value)} />
+            </label>
+            <label>Participants attendus
+              <input type="number" min={1} value={participants} onChange={(event) => setParticipants(Number(event.target.value))} />
+            </label>
+            <button className="dir-primary-button" type="submit">Ajouter l’activité</button>
+          </form>
+        </section>
+        <section className="dir-published">
+          <div className="dir-panel-heading">
+            <div><p className="dir-kicker">Calendrier</p><h2>Activités planifiées</h2></div>
+            <span>{directionActivities.length}</span>
+          </div>
+          {directionActivities.length === 0 ? (
+            <EmptyState title="Aucune activité" detail="Ajoutez la première activité." />
+          ) : (
+            <div className="dir-activity-list">
+              {directionActivities
+                .slice()
+                .sort((left, right) => left.startsAt.localeCompare(right.startsAt))
+                .map((activity) => (
+                  <article key={activity.id}>
+                    <div className="dir-activity-date">
+                      <strong>{new Intl.DateTimeFormat('fr-MA', { day: '2-digit' }).format(new Date(activity.startsAt))}</strong>
+                      <span>{new Intl.DateTimeFormat('fr-MA', { month: 'short' }).format(new Date(activity.startsAt))}</span>
+                    </div>
+                    <div><strong>{activity.title}</strong><small>{activity.kind} · {activity.location} · {activity.participants} participants</small></div>
+                    <button type="button" onClick={() => {
+                      deleteDirectionActivity(activity.id)
+                      showToast('Activité supprimée.', 'success')
+                    }}>Supprimer</button>
+                  </article>
+                ))}
+            </div>
+          )}
+        </section>
+      </div>
+    </PageFrame>
+  )
+}
+
+function ReportsPage() {
+  const ready = usePageReady()
+  const { requests, lessons, directionUsers, directionActivities, clubs } = useData()
+  const { showToast } = useToast()
+  if (!ready) return <LoadingState />
+
+  const activeUsers = directionUsers.filter((user) => user.active).length
+  const statusRows = statusOptions.map((status) => ({
+    label: REQUEST_STATUS_LABELS[status],
+    count: requests.filter((request) => request.status === status).length,
+  }))
+  const roleRows = (['stagiaire', 'formateur', 'direction', 'club'] as UserRole[]).map((role) => ({
+    label: ROLE_LABELS[role],
+    count: directionUsers.filter((user) => user.role === role).length,
+  }))
+
+  return (
+    <PageFrame
+      eyebrow="Espace Direction · Indicateurs"
+      title="Rapports"
+      intro="Une synthèse fictive des demandes, ressources et utilisateurs."
+    >
+      <div className="dir-report-actions">
+        <span>Données consolidées sur le navigateur</span>
+        <button className="dir-secondary-button" type="button" onClick={() => showToast('Rapport PDF simulé : export prêt.', 'success')}>
+          Exporter en PDF
+        </button>
+      </div>
+      <div className="dir-report-stat-grid">
+        <StatBlock label="Utilisateurs actifs" value={activeUsers} note="Sur tous les rôles" />
+        <StatBlock label="Supports publiés" value={lessons.length} note="Bibliothèque numérique" />
+        <StatBlock label="Activités planifiées" value={directionActivities.length} note="Établissement et clubs" />
+        <StatBlock label="Membres de clubs" value={clubs.reduce((sum, club) => sum + club.memberCount, 0)} note="Deux clubs fictifs" />
+      </div>
+      <div className="dir-chart-grid">
+        <SimpleBarChart title="Demandes par statut" rows={statusRows} />
+        <SimpleBarChart title="Utilisateurs par rôle" rows={roleRows} />
+      </div>
+    </PageFrame>
+  )
+}
+
 export {
+  ActivitiesPage,
   AnnouncementsPage,
   DashboardPage,
+  FilieresSectionsPage,
+  ReportsPage,
   RequestDetailPage,
   RequestsPage,
+  UsersPage,
 }

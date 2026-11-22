@@ -3,6 +3,10 @@ import type {
   Announcement,
   AppDatabase,
   ClubJoinRequest,
+  DirectionActivity,
+  DirectionSection,
+  DirectionUser,
+  Filiere,
   Club,
   ClubEvent,
   Lesson,
@@ -611,6 +615,38 @@ const clubJoinRequests: ClubJoinRequest[] = [
   },
 ]
 
+const directionUsers: DirectionUser[] = [
+  { id: 'user-001', name: 'Lina Démo', email: 'stagiaire@demo.ma', role: 'stagiaire', filiere: 'Développement Digital', active: true },
+  { id: 'user-002', name: 'Younes Démo', email: 'younes@demo.ma', role: 'stagiaire', filiere: 'Développement Digital', active: true },
+  { id: 'user-003', name: 'Salma Démo', email: 'salma@demo.ma', role: 'stagiaire', filiere: 'Gestion des entreprises', active: true },
+  { id: 'user-004', name: 'Sami Démo', email: 'formateur@demo.ma', role: 'formateur', active: true },
+  { id: 'user-005', name: 'Amina Démo', email: 'amina@demo.ma', role: 'formateur', active: true },
+  { id: 'user-006', name: 'Nadia Démo', email: 'direction@demo.ma', role: 'direction', active: true },
+  { id: 'user-007', name: 'Rayan Démo', email: 'club@demo.ma', role: 'club', active: true },
+  { id: 'user-008', name: 'Khadija Démo', email: 'khadija@demo.ma', role: 'stagiaire', filiere: 'Infrastructure Digitale', active: false },
+]
+
+const filieres: Filiere[] = [
+  { id: 'filiere-dd', name: 'Développement Digital', color: '#1F4E9C' },
+  { id: 'filiere-id', name: 'Infrastructure Digitale', color: '#2E9B4F' },
+  { id: 'filiere-ge', name: 'Gestion des entreprises', color: '#8A8D91' },
+]
+
+const directionSections: DirectionSection[] = [
+  { id: 'section-dd-1a', filiereId: 'filiere-dd', name: '1re année · Groupe A' },
+  { id: 'section-dd-1b', filiereId: 'filiere-dd', name: '1re année · Groupe B' },
+  { id: 'section-dd-2a', filiereId: 'filiere-dd', name: '2e année · Groupe A' },
+  { id: 'section-id-1a', filiereId: 'filiere-id', name: '1re année · Groupe A' },
+  { id: 'section-id-2a', filiereId: 'filiere-id', name: '2e année · Groupe A' },
+  { id: 'section-ge-1a', filiereId: 'filiere-ge', name: '1re année · Groupe A' },
+]
+
+const directionActivities: DirectionActivity[] = [
+  { id: 'activity-001', title: 'Rencontre pédagogique mensuelle', kind: 'Établissement', startsAt: '2026-11-27T14:00:00.000Z', location: 'Salle de réunion', participants: 18, createdAt: '2026-11-10T09:00:00.000Z' },
+  { id: 'activity-002', title: 'Atelier CS Club', kind: 'Club', startsAt: '2026-11-25T14:00:00.000Z', location: 'Salle informatique B12', participants: 24, createdAt: '2026-11-12T10:00:00.000Z' },
+  { id: 'activity-003', title: 'Présentation des projets', kind: 'Club', startsAt: '2026-12-03T13:30:00.000Z', location: 'Salle polyvalente', participants: 30, createdAt: '2026-11-14T11:30:00.000Z' },
+]
+
 export const seedData: AppDatabase = {
   announcements,
   lessons,
@@ -620,4 +656,8 @@ export const seedData: AppDatabase = {
   events,
   registrations,
   clubJoinRequests,
+  directionUsers,
+  filieres,
+  directionSections,
+  directionActivities,
 }
