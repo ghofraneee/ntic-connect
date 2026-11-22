@@ -6,6 +6,7 @@ import type {
   DirectionActivity,
   DirectionSection,
   DirectionUser,
+  ScheduleWeek,
   Filiere,
   Club,
   ClubEvent,
@@ -647,6 +648,26 @@ const directionActivities: DirectionActivity[] = [
   { id: 'activity-003', title: 'Présentation des projets', kind: 'Club', startsAt: '2026-12-03T13:30:00.000Z', location: 'Salle polyvalente', participants: 30, createdAt: '2026-11-14T11:30:00.000Z' },
 ]
 
+const scheduleWeeks: ScheduleWeek[] = [
+  {
+    id: 'schedule-2026-11-23',
+    weekStart: '2026-11-23',
+    label: '23 au 27 novembre 2026',
+    slots: [
+      { id: 'slot-001', day: 'Lundi', startTime: '08:30', endTime: '10:30', course: 'Algorithmique', room: 'Salle B12', filiere: 'Développement Digital', section: '1re année · Groupe A' },
+      { id: 'slot-002', day: 'Lundi', startTime: '10:45', endTime: '12:45', course: 'Anglais technique', room: 'Salle A04', filiere: 'Développement Digital', section: '1re année · Groupe A' },
+      { id: 'slot-003', day: 'Mardi', startTime: '08:30', endTime: '10:30', course: 'JavaScript', room: 'Salle B12', filiere: 'Développement Digital', section: '1re année · Groupe A' },
+      { id: 'slot-004', day: 'Mardi', startTime: '14:00', endTime: '16:00', course: 'Travaux pratiques', room: 'Laboratoire 2', filiere: 'Développement Digital', section: '1re année · Groupe A' },
+      { id: 'slot-005', day: 'Mercredi', startTime: '08:30', endTime: '10:30', course: 'Bases de données', room: 'Salle B10', filiere: 'Développement Digital', section: '1re année · Groupe A' },
+      { id: 'slot-006', day: 'Mercredi', startTime: '10:45', endTime: '12:45', course: 'Communication', room: 'Salle A04', filiere: 'Développement Digital', section: '1re année · Groupe A' },
+      { id: 'slot-007', day: 'Jeudi', startTime: '10:45', endTime: '12:45', course: 'Réseaux', room: 'Laboratoire 1', filiere: 'Développement Digital', section: '1re année · Groupe A' },
+      { id: 'slot-008', day: 'Jeudi', startTime: '14:00', endTime: '16:00', course: 'Projet en équipe', room: 'Salle B12', filiere: 'Développement Digital', section: '1re année · Groupe A' },
+      { id: 'slot-009', day: 'Vendredi', startTime: '08:30', endTime: '10:30', course: 'Python', room: 'Salle B12', filiere: 'Développement Digital', section: '1re année · Groupe A' },
+      { id: 'slot-010', day: 'Vendredi', startTime: '14:00', endTime: '16:00', course: 'Accompagnement', room: 'Salle A02', filiere: 'Développement Digital', section: '1re année · Groupe A' },
+    ],
+  },
+]
+
 export const seedData: AppDatabase = {
   announcements,
   lessons,
@@ -660,4 +681,5 @@ export const seedData: AppDatabase = {
   filieres,
   directionSections,
   directionActivities,
+  scheduleWeeks,
 }

@@ -91,16 +91,6 @@ const opportunityItems = [
   },
 ] as const
 
-const scheduleDays = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi']
-const scheduleSlots = ['08:30 – 10:30', '10:45 – 12:45', '14:00 – 16:00']
-const schedule: Record<string, (string | null)[]> = {
-  Lundi: ['Algorithmique · Salle B12', 'Anglais technique · Salle A04', null],
-  Mardi: ['JavaScript · Salle B12', null, 'Travaux pratiques · Lab 2'],
-  Mercredi: ['Bases de données · Salle B10', 'Communication · Salle A04', null],
-  Jeudi: [null, 'Réseaux · Lab 1', 'Projet en équipe · Salle B12'],
-  Vendredi: ['Python · Salle B12', null, 'Accompagnement · Salle A02'],
-}
-
 function formatDate(value: string, options?: Intl.DateTimeFormatOptions): string {
   return new Intl.DateTimeFormat('fr-MA', {
     day: 'numeric',
@@ -718,31 +708,83 @@ function RequestDetailPage() {
 
 function SchedulePage() {
   const ready = usePageReady()
+  const { user } = useAuth()
+  const { scheduleWeeks, filieres } = useData()
+  const [selectedWeekId, setSelectedWeekId] = useState('')
   if (!ready) return <LoadingSkeleton />
+  if (user === null) return null
+
+  const weeks = scheduleWeeks.slice().sort(
+    (left, right) => right.weekStart.localeCompare(left.weekStart),
+  )
+  const selectedWeek =
+    weeks.find((week) => week.id === selectedWeekId) ?? weeks[0]
+  const section = '1re année · Groupe A'
+  const slots = selectedWeek?.slots.filter(
+    (slot) =>
+      slot.filiere === (user.filiere ?? 'Développement Digital') &&
+      slot.section === section,
+  ) ?? []
+  const days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
+  const timeRanges = Array.from(
+    new Set(slots.map((slot) => `${slot.startTime} – ${slot.endTime}`)),
+  ).sort()
+
   return (
     <PageFrame
       eyebrow="Espace stagiaire · Organisation"
       title="Emploi du temps"
-      intro="Une vue hebdomadaire indicative pour le groupe 1re année · Groupe A."
+      intro={`Une vue hebdomadaire pour ${user.filiere ?? 'Développement Digital'} · ${section}.`}
     >
-      <div className="stg-schedule-note"><CalendarDays size={18} /> Semaine du 23 au 27 novembre 2026 · Planning de démonstration</div>
+      {weeks.length > 1 && (
+        <label className="stg-schedule-week-picker">
+          Semaine
+          <select
+            value={selectedWeek?.id ?? ''}
+            onChange={(event) => setSelectedWeekId(event.target.value)}
+          >
+            {weeks.map((week) => (
+              <option value={week.id} key={week.id}>{week.label}</option>
+            ))}
+          </select>
+        </label>
+      )}
+      <div className="stg-schedule-note">
+        <CalendarDays size={18} />
+        {selectedWeek?.label ? `Semaine du ${selectedWeek.label}` : 'Aucune semaine publiée'}
+      </div>
       <div className="stg-schedule-scroll" tabIndex={0} aria-label="Emploi du temps hebdomadaire">
         <table className="stg-schedule">
-          <thead><tr><th>Horaire</th>{scheduleDays.map((day) => <th key={day}>{day}</th>)}</tr></thead>
+          <thead><tr><th>Horaire</th>{days.map((day) => <th key={day}>{day}</th>)}</tr></thead>
           <tbody>
-            {scheduleSlots.map((slot, slotIndex) => (
-              <tr key={slot}>
-                <th scope="row">{slot}</th>
-                {scheduleDays.map((day) => {
-                  const item = schedule[day][slotIndex]
-                  return <td key={day}>{item ? <span>{item.split(' · ')[0]}<small>{item.split(' · ')[1]}</small></span> : <span className="stg-schedule__free">Temps libre</span>}</td>
+            {timeRanges.map((range) => (
+              <tr key={range}>
+                <th scope="row">{range}</th>
+                {days.map((day) => {
+                  const item = slots.find(
+                    (slot) =>
+                      slot.day === day &&
+                      `${slot.startTime} – ${slot.endTime}` === range,
+                  )
+                  return (
+                    <td key={day}>
+                      {item ? (
+                        <span>{item.course}<small>{item.room}</small></span>
+                      ) : (
+                        <span className="stg-schedule__free">Temps libre</span>
+                      )}
+                    </td>
+                  )
                 })}
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      <p className="stg-footnote">Les horaires sont fictifs et pourront être adaptés aux groupes de formation.</p>
+      {slots.length === 0 && (
+        <EmptyState title="Aucun cours cette semaine" detail="La Direction n’a pas encore publié de créneau pour votre groupe." />
+      )}
+      <p className="stg-footnote">{filieres.length} filière(s) configurée(s) · Planning partagé avec la Direction.</p>
     </PageFrame>
   )
 }

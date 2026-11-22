@@ -15,6 +15,8 @@ import {
   type Lesson,
   type Notification,
   type Registration,
+  type ScheduleSlot,
+  type ScheduleWeek,
   type RequestHistoryEntry,
 } from './db'
 import type { AuthUser, UserRole } from '../auth/roles'
@@ -734,6 +736,78 @@ export default function DataProvider({ children }: { children: ReactNode }) {
     }))
   }
 
+  const saveScheduleWeek = (week: ScheduleWeek) => {
+    if (!week.weekStart || !week.label.trim()) {
+      throw new Error('La date et le libellé de la semaine sont obligatoires.')
+    }
+    setDatabase((current) => {
+      const exists = current.scheduleWeeks.some((item) => item.id === week.id)
+      return {
+        ...current,
+        scheduleWeeks: exists
+          ? current.scheduleWeeks.map((item) => item.id === week.id ? week : item)
+          : [week, ...current.scheduleWeeks],
+      }
+    })
+  }
+
+  const deleteScheduleWeek = (id: string) => {
+    setDatabase((current) => ({
+      ...current,
+      scheduleWeeks: current.scheduleWeeks.filter((week) => week.id !== id),
+    }))
+  }
+
+  const addScheduleSlot = (
+    weekId: string,
+    slot: Omit<ScheduleSlot, 'id'>,
+  ): ScheduleSlot => {
+    if (!slot.course.trim() || !slot.room.trim()) {
+      throw new Error('Le cours et la salle sont obligatoires.')
+    }
+    const created: ScheduleSlot = { ...slot, id: createId('slot') }
+    setDatabase((current) => ({
+      ...current,
+      scheduleWeeks: current.scheduleWeeks.map((week) =>
+        week.id === weekId
+          ? { ...week, slots: [...week.slots, created] }
+          : week,
+      ),
+    }))
+    return created
+  }
+
+  const updateScheduleSlot = (
+    weekId: string,
+    slotId: string,
+    changes: Partial<Omit<ScheduleSlot, 'id'>>,
+  ) => {
+    setDatabase((current) => ({
+      ...current,
+      scheduleWeeks: current.scheduleWeeks.map((week) =>
+        week.id === weekId
+          ? {
+              ...week,
+              slots: week.slots.map((slot) =>
+                slot.id === slotId ? { ...slot, ...changes } : slot,
+              ),
+            }
+          : week,
+      ),
+    }))
+  }
+
+  const deleteScheduleSlot = (weekId: string, slotId: string) => {
+    setDatabase((current) => ({
+      ...current,
+      scheduleWeeks: current.scheduleWeeks.map((week) =>
+        week.id === weekId
+          ? { ...week, slots: week.slots.filter((slot) => slot.id !== slotId) }
+          : week,
+      ),
+    }))
+  }
+
   const value: DataContextValue = {
     ...database,
     resetData,
@@ -764,6 +838,11 @@ export default function DataProvider({ children }: { children: ReactNode }) {
     deleteDirectionSection,
     addDirectionActivity,
     deleteDirectionActivity,
+    saveScheduleWeek,
+    deleteScheduleWeek,
+    addScheduleSlot,
+    updateScheduleSlot,
+    deleteScheduleSlot,
   }
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>

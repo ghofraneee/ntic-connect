@@ -76,6 +76,7 @@ const navigationByRole: Record<UserRole, NavigationItem[]> = {
       icon: GraduationCap,
     },
     { label: 'Activités', path: 'activites', icon: CalendarDays },
+    { label: 'Emplois du temps', path: 'emploi-du-temps', icon: CalendarDays },
     { label: 'Rapports', path: 'rapports', icon: ChartNoAxesColumn },
   ],
   club: [

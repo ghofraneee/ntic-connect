@@ -25,6 +25,7 @@ import {
   ReportsPage as DirectionReportsPage,
   RequestDetailPage as DirectionRequestDetailPage,
   RequestsPage as DirectionRequestsPage,
+  SchedulePage as DirectionSchedulePage,
   UsersPage as DirectionUsersPage,
 } from './direction/DirectionPages'
 import {
@@ -80,6 +81,7 @@ export default function AppRoutes() {
         <Route path="utilisateurs" element={<DirectionUsersPage />} />
         <Route path="filieres" element={<FilieresSectionsPage />} />
         <Route path="activites" element={<DirectionActivitiesPage />} />
+        <Route path="emploi-du-temps" element={<DirectionSchedulePage />} />
         <Route path="rapports" element={<DirectionReportsPage />} />
         <Route path="*" element={<WorkspacePlaceholder />} />
       </Route>

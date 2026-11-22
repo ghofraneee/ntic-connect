@@ -164,6 +164,32 @@ export type DirectionActivity = {
   createdAt: string
 }
 
+export type ScheduleDay =
+  | 'Lundi'
+  | 'Mardi'
+  | 'Mercredi'
+  | 'Jeudi'
+  | 'Vendredi'
+  | 'Samedi'
+
+export type ScheduleSlot = {
+  id: string
+  day: ScheduleDay
+  startTime: string
+  endTime: string
+  course: string
+  room: string
+  filiere: string
+  section: string
+}
+
+export type ScheduleWeek = {
+  id: string
+  weekStart: string
+  label: string
+  slots: ScheduleSlot[]
+}
+
 export type AppDatabase = {
   announcements: Announcement[]
   lessons: Lesson[]
@@ -177,6 +203,7 @@ export type AppDatabase = {
   filieres: Filiere[]
   directionSections: DirectionSection[]
   directionActivities: DirectionActivity[]
+  scheduleWeeks: ScheduleWeek[]
 }
 
 const STORAGE_KEY = 'ntic-connect:data:v1'
@@ -193,6 +220,7 @@ const COLLECTION_KEYS: (keyof AppDatabase)[] = [
   'filieres',
   'directionSections',
   'directionActivities',
+  'scheduleWeeks',
 ]
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -234,7 +262,7 @@ export function loadDatabase(): AppDatabase {
     }
     if (
       isRecord(parsed) &&
-      (parsed.version === 1 || parsed.version === 2) &&
+      (parsed.version === 1 || parsed.version === 2 || parsed.version === 3) &&
       isRecord(parsed.data)
     ) {
       const seed = cloneSeedData()

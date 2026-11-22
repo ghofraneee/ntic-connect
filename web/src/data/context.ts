@@ -10,6 +10,8 @@ import type {
   DirectionActivity,
   DirectionSection,
   DirectionUser,
+  ScheduleSlot,
+  ScheduleWeek,
   Filiere,
   Lesson,
   Notification,
@@ -89,6 +91,15 @@ export type DataContextValue = AppDatabase & {
     input: Omit<DirectionActivity, 'id' | 'createdAt'>,
   ) => DirectionActivity
   deleteDirectionActivity: (id: string) => void
+  saveScheduleWeek: (week: ScheduleWeek) => void
+  deleteScheduleWeek: (id: string) => void
+  addScheduleSlot: (weekId: string, slot: Omit<ScheduleSlot, 'id'>) => ScheduleSlot
+  updateScheduleSlot: (
+    weekId: string,
+    slotId: string,
+    changes: Partial<Omit<ScheduleSlot, 'id'>>,
+  ) => void
+  deleteScheduleSlot: (weekId: string, slotId: string) => void
 }
 
 export const DataContext = createContext<DataContextValue | null>(null)

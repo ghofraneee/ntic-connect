@@ -9,6 +9,8 @@ import type {
   AnnouncementTarget,
   RequestStatus,
   RequestType,
+  ScheduleSlot,
+  ScheduleWeek,
 } from '../../data/db'
 import { REQUEST_STATUS_LABELS } from '../../data/db'
 import { useData } from '../../data/useData'
@@ -1136,6 +1138,263 @@ function ReportsPage() {
   )
 }
 
+function SchedulePage() {
+  const ready = usePageReady()
+  const {
+    scheduleWeeks,
+    filieres,
+    directionSections,
+    saveScheduleWeek,
+    deleteScheduleWeek,
+    addScheduleSlot,
+    updateScheduleSlot,
+    deleteScheduleSlot,
+  } = useData()
+  const { showToast } = useToast()
+  const [selectedWeekId, setSelectedWeekId] = useState('')
+  const [weekStart, setWeekStart] = useState('')
+  const [weekLabel, setWeekLabel] = useState('')
+  const [editingSlotId, setEditingSlotId] = useState('')
+  const [day, setDay] = useState<ScheduleSlot['day']>('Lundi')
+  const [startTime, setStartTime] = useState('08:30')
+  const [endTime, setEndTime] = useState('10:30')
+  const [course, setCourse] = useState('')
+  const [room, setRoom] = useState('')
+  const [filiere, setFiliere] = useState(filieres[0]?.name ?? '')
+  const [section, setSection] = useState(directionSections[0]?.name ?? '')
+
+  if (!ready) return <LoadingState />
+
+  const weeks = scheduleWeeks.slice().sort(
+    (left, right) => right.weekStart.localeCompare(left.weekStart),
+  )
+  const selectedWeek =
+    weeks.find((week) => week.id === selectedWeekId) ?? weeks[0]
+
+  const resetSlotForm = () => {
+    setEditingSlotId('')
+    setDay('Lundi')
+    setStartTime('08:30')
+    setEndTime('10:30')
+    setCourse('')
+    setRoom('')
+  }
+
+  const submitWeek = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!weekStart || !weekLabel.trim()) {
+      showToast('La date de début et le libellé sont obligatoires.', 'error')
+      return
+    }
+    const week: ScheduleWeek = {
+      id: `schedule-${weekStart}`,
+      weekStart,
+      label: weekLabel.trim(),
+      slots: [],
+    }
+    try {
+      saveScheduleWeek(week)
+      setSelectedWeekId(week.id)
+      setWeekStart('')
+      setWeekLabel('')
+      showToast('Nouvelle semaine créée.', 'success')
+    } catch (reason) {
+      showToast(reason instanceof Error ? reason.message : 'Impossible de créer la semaine.', 'error')
+    }
+  }
+
+  const submitSlot = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!selectedWeek) {
+      showToast('Créez une semaine avant d’ajouter un créneau.', 'error')
+      return
+    }
+    if (!course.trim() || !room.trim()) {
+      showToast('Le cours et la salle sont obligatoires.', 'error')
+      return
+    }
+    try {
+      if (editingSlotId) {
+        updateScheduleSlot(selectedWeek.id, editingSlotId, {
+          day,
+          startTime,
+          endTime,
+          course: course.trim(),
+          room: room.trim(),
+          filiere,
+          section,
+        })
+        showToast('Créneau mis à jour.', 'success')
+      } else {
+        addScheduleSlot(selectedWeek.id, {
+          day,
+          startTime,
+          endTime,
+          course: course.trim(),
+          room: room.trim(),
+          filiere,
+          section,
+        })
+        showToast('Créneau ajouté.', 'success')
+      }
+      resetSlotForm()
+    } catch (reason) {
+      showToast(reason instanceof Error ? reason.message : 'Impossible d’enregistrer le créneau.', 'error')
+    }
+  }
+
+  const editSlot = (slot: ScheduleSlot) => {
+    setEditingSlotId(slot.id)
+    setDay(slot.day)
+    setStartTime(slot.startTime)
+    setEndTime(slot.endTime)
+    setCourse(slot.course)
+    setRoom(slot.room)
+    setFiliere(slot.filiere)
+    setSection(slot.section)
+  }
+
+  const days: ScheduleSlot['day'][] = [
+    'Lundi',
+    'Mardi',
+    'Mercredi',
+    'Jeudi',
+    'Vendredi',
+    'Samedi',
+  ]
+
+  return (
+    <PageFrame
+      eyebrow="Espace Direction · Organisation"
+      title="Emplois du temps"
+      intro="Créez une semaine et gérez les cours, salles et créneaux par section."
+    >
+      <div className="dir-schedule-layout">
+        <section className="dir-panel dir-schedule-sidebar">
+          <p className="dir-kicker">Semaines</p>
+          <h2>Planning hebdomadaire</h2>
+          <form className="dir-form" onSubmit={submitWeek}>
+            <label>Début de semaine
+              <input type="date" value={weekStart} onChange={(event) => setWeekStart(event.target.value)} />
+            </label>
+            <label>Libellé
+              <input value={weekLabel} onChange={(event) => setWeekLabel(event.target.value)} placeholder="Ex. 30 novembre au 4 décembre 2026" />
+            </label>
+            <button className="dir-primary-button" type="submit">Créer la semaine</button>
+          </form>
+
+          {weeks.length > 0 && (
+            <div className="dir-week-list">
+              {weeks.map((week) => (
+                <article key={week.id} className={selectedWeek?.id === week.id ? 'is-selected' : ''}>
+                  <button type="button" onClick={() => setSelectedWeekId(week.id)}>
+                    <strong>{week.label}</strong>
+                    <small>{week.slots.length} créneau{week.slots.length === 1 ? '' : 'x'}</small>
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={`Supprimer la semaine ${week.label}`}
+                    onClick={() => {
+                      deleteScheduleWeek(week.id)
+                      setSelectedWeekId('')
+                      resetSlotForm()
+                      showToast('Semaine supprimée.', 'success')
+                    }}
+                  >
+                    ×
+                  </button>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="dir-panel dir-schedule-editor">
+          <p className="dir-kicker">Édition des créneaux</p>
+          <h2>{selectedWeek?.label ?? 'Aucune semaine sélectionnée'}</h2>
+          {selectedWeek ? (
+            <>
+              <form className="dir-schedule-slot-form" onSubmit={submitSlot}>
+                <label>Jour
+                  <select value={day} onChange={(event) => setDay(event.target.value as ScheduleSlot['day'])}>
+                    {days.map((item) => <option key={item}>{item}</option>)}
+                  </select>
+                </label>
+                <label>Début
+                  <input type="time" value={startTime} onChange={(event) => setStartTime(event.target.value)} />
+                </label>
+                <label>Fin
+                  <input type="time" value={endTime} onChange={(event) => setEndTime(event.target.value)} />
+                </label>
+                <label>Cours
+                  <input value={course} onChange={(event) => setCourse(event.target.value)} placeholder="Ex. JavaScript" />
+                </label>
+                <label>Salle
+                  <input value={room} onChange={(event) => setRoom(event.target.value)} placeholder="Ex. Salle B12" />
+                </label>
+                <label>Filière
+                  <select value={filiere} onChange={(event) => setFiliere(event.target.value)}>
+                    {filieres.map((item) => <option value={item.name} key={item.id}>{item.name}</option>)}
+                  </select>
+                </label>
+                <label>Section
+                  <select value={section} onChange={(event) => setSection(event.target.value)}>
+                    {directionSections.map((item) => <option value={item.name} key={item.id}>{item.name}</option>)}
+                  </select>
+                </label>
+                <div className="dir-schedule-actions">
+                  {editingSlotId && (
+                    <button className="dir-secondary-button" type="button" onClick={resetSlotForm}>Annuler</button>
+                  )}
+                  <button className="dir-primary-button" type="submit">
+                    {editingSlotId ? 'Mettre à jour' : 'Ajouter le créneau'}
+                  </button>
+                </div>
+              </form>
+
+              {selectedWeek.slots.length === 0 ? (
+                <EmptyState title="Aucun créneau" detail="Ajoutez le premier cours de cette semaine." />
+              ) : (
+                <div className="dir-schedule-table">
+                  {days.map((selectedDay) => {
+                    const slots = selectedWeek.slots
+                      .filter((slot) => slot.day === selectedDay)
+                      .slice()
+                      .sort((left, right) => left.startTime.localeCompare(right.startTime))
+                    if (slots.length === 0) return null
+                    return (
+                      <section key={selectedDay}>
+                        <h3>{selectedDay}</h3>
+                        {slots.map((slot) => (
+                          <article key={slot.id}>
+                            <time>{slot.startTime} – {slot.endTime}</time>
+                            <div>
+                              <strong>{slot.course}</strong>
+                              <small>{slot.room} · {slot.filiere} · {slot.section}</small>
+                            </div>
+                            <button type="button" onClick={() => editSlot(slot)}>Modifier</button>
+                            <button type="button" onClick={() => {
+                              deleteScheduleSlot(selectedWeek.id, slot.id)
+                              if (editingSlotId === slot.id) resetSlotForm()
+                              showToast('Créneau supprimé.', 'success')
+                            }}>Supprimer</button>
+                          </article>
+                        ))}
+                      </section>
+                    )
+                  })}
+                </div>
+              )}
+            </>
+          ) : (
+            <EmptyState title="Aucune semaine publiée" detail="Créez une semaine pour commencer." />
+          )}
+        </section>
+      </div>
+    </PageFrame>
+  )
+}
+
 export {
   ActivitiesPage,
   AnnouncementsPage,
@@ -1144,5 +1403,6 @@ export {
   ReportsPage,
   RequestDetailPage,
   RequestsPage,
+  SchedulePage,
   UsersPage,
 }

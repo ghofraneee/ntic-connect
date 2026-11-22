@@ -1185,3 +1185,217 @@
     grid-column: 1 / -1;
   }
 }
+
+.dir-schedule-layout {
+  display: grid;
+  grid-template-columns: minmax(230px, 0.65fr) minmax(0, 1.35fr);
+  align-items: start;
+  gap: 16px;
+}
+
+.dir-schedule-sidebar h2,
+.dir-schedule-editor h2 {
+  margin-bottom: 18px;
+}
+
+.dir-week-list {
+  display: grid;
+  margin-top: 18px;
+  border-top: 1px solid rgb(11 27 58 / 14%);
+}
+
+.dir-week-list article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 34px;
+  align-items: center;
+  border-bottom: 1px solid rgb(11 27 58 / 12%);
+}
+
+.dir-week-list article.is-selected {
+  background: #eeece6;
+  border-left: 3px solid var(--color-green);
+}
+
+.dir-week-list article > button:first-child {
+  display: grid;
+  gap: 4px;
+  min-height: 58px;
+  padding: 9px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--color-ink);
+  cursor: pointer;
+  text-align: left;
+}
+
+.dir-week-list article > button:first-child small {
+  color: #647086;
+  font-size: 0.68rem;
+}
+
+.dir-week-list article > button:last-child {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid rgb(11 27 58 / 18%);
+  background: transparent;
+  color: #8b302b;
+  cursor: pointer;
+}
+
+.dir-schedule-slot-form {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 11px;
+  margin-bottom: 18px;
+  padding: 15px;
+  border: 1px solid rgb(11 27 58 / 12%);
+  background: #f9f8f4;
+}
+
+.dir-schedule-slot-form > label {
+  display: grid;
+  gap: 6px;
+  color: var(--color-ink);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.dir-schedule-slot-form input,
+.dir-schedule-slot-form select {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 9px;
+  border: 1px solid rgb(11 27 58 / 20%);
+  background: #fff;
+  color: var(--color-ink);
+  font-size: 0.78rem;
+}
+
+.dir-schedule-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.dir-schedule-table {
+  display: grid;
+  border-top: 1px solid rgb(11 27 58 / 14%);
+}
+
+.dir-schedule-table section {
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr);
+  gap: 0 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgb(11 27 58 / 12%);
+}
+
+.dir-schedule-table h3 {
+  grid-row: 1 / span 20;
+  margin: 0;
+  color: var(--color-ink);
+  font-size: 0.82rem;
+}
+
+.dir-schedule-table article {
+  display: grid;
+  grid-column: 2;
+  grid-template-columns: 88px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 0;
+}
+
+.dir-schedule-table time {
+  color: #526078;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.dir-schedule-table article > div {
+  display: grid;
+  gap: 3px;
+}
+
+.dir-schedule-table article strong {
+  color: var(--color-ink);
+  font-size: 0.78rem;
+}
+
+.dir-schedule-table article small {
+  color: #647086;
+  font-size: 0.66rem;
+}
+
+.dir-schedule-table article button {
+  min-height: 32px;
+  padding: 6px 8px;
+  border: 1px solid rgb(11 27 58 / 18%);
+  background: transparent;
+  color: var(--color-ink);
+  cursor: pointer;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.dir-schedule-table article button:last-child {
+  color: #8b302b;
+}
+
+.stg-schedule-week-picker {
+  display: grid;
+  width: min(300px, 100%);
+  gap: 6px;
+  margin-bottom: 14px;
+  color: #526078;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.stg-schedule-week-picker select {
+  min-height: 42px;
+  padding: 9px 10px;
+  border: 1px solid rgb(11 27 58 / 20%);
+  background: #fff;
+  color: var(--color-ink);
+  font-size: 0.82rem;
+}
+
+@media (max-width: 1000px) {
+  .dir-schedule-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .dir-schedule-slot-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 540px) {
+  .dir-schedule-slot-form {
+    grid-template-columns: 1fr;
+  }
+
+  .dir-schedule-actions {
+    flex-direction: column-reverse;
+  }
+
+  .dir-schedule-actions button {
+    width: 100%;
+  }
+
+  .dir-schedule-table section {
+    grid-template-columns: 64px minmax(0, 1fr);
+  }
+
+  .dir-schedule-table article {
+    grid-column: 2;
+    grid-template-columns: 76px minmax(0, 1fr);
+  }
+
+  .dir-schedule-table article button {
+    grid-column: 2;
+  }
+}
